@@ -1,1 +1,283 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Cầu 1-8</title>
 
+<style>
+body{
+    background:#111;
+    color:#fff;
+    font-family:Arial;
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+}
+
+textarea{
+    width:100%;
+    height:120px;
+    background:#222;
+    color:#0f0;
+    border:1px solid #444;
+    padding:10px;
+    font-size:18px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    font-size:18px;
+    background:#00aa55;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+.card{
+    margin-top:15px;
+    background:#222;
+    padding:15px;
+    border-radius:10px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+td{
+    padding:8px;
+    border-bottom:1px solid #444;
+}
+
+.big{
+    font-size:32px;
+    font-weight:bold;
+    color:#00ff88;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    font-size:24px;
+    text-align:center;
+}
+</style>
+</head>
+<body>
+
+<h2>AI Dự Đoán Cầu 1-8</h2>
+
+<input id="liveInput" maxlength="1" placeholder="Nhập từng số 1-8">
+
+<textarea id="history"></textarea>
+
+<button onclick="predict()">PHÂN TÍCH AI</button>
+
+<div id="result"></div>
+
+<script>
+
+const live=document.getElementById("liveInput");
+const historyBox=document.getElementById("history");
+
+live.addEventListener("input",()=>{
+
+    let v=live.value.replace(/[^1-8]/g,'');
+
+    if(!v) return;
+
+    if(historyBox.value.length===0)
+        historyBox.value=v;
+    else
+        historyBox.value+="-"+v;
+
+    live.value="";
+});
+
+function norm(obj){
+
+    let total=0;
+
+    for(let k in obj)
+        total+=obj[k];
+
+    let out={};
+
+    for(let k in obj)
+        out[k]=obj[k]/total;
+
+    return out;
+}
+
+function predict(){
+
+    let arr=historyBox.value
+        .replace(/[^1-8]/g,"-")
+        .split("-")
+        .filter(x=>x!="")
+        .map(Number);
+
+    if(arr.length<10){
+
+        result.innerHTML=
+        "<div class='card'>Cần ít nhất 10 phiên</div>";
+
+        return;
+    }
+
+    let freq={};
+
+    for(let i=1;i<=8;i++)
+        freq[i]=0;
+
+    arr.forEach(n=>freq[n]++);
+
+    let globalProb=norm(freq);
+
+    let m1={};
+    let m2={};
+    let m3={};
+
+    for(let i=0;i<arr.length-1;i++){
+
+        let s1=arr[i];
+
+        if(!m1[s1]) m1[s1]={};
+
+        m1[s1][arr[i+1]]=
+            (m1[s1][arr[i+1]]||0)+1;
+    }
+
+    for(let i=0;i<arr.length-2;i++){
+
+        let s2=arr[i]+"-"+arr[i+1];
+
+        if(!m2[s2]) m2[s2]={};
+
+        m2[s2][arr[i+2]]=
+            (m2[s2][arr[i+2]]||0)+1;
+    }
+
+    for(let i=0;i<arr.length-3;i++){
+
+        let s3=
+            arr[i]+"-"+arr[i+1]+"-"+arr[i+2];
+
+        if(!m3[s3]) m3[s3]={};
+
+        m3[s3][arr[i+3]]=
+            (m3[s3][arr[i+3]]||0)+1;
+    }
+
+    let last1=arr[arr.length-1];
+
+    let last2=
+        arr[arr.length-2]+"-"+arr[arr.length-1];
+
+    let last3=
+        arr[arr.length-3]+"-"+arr[arr.length-2]+"-"+arr[arr.length-1];
+
+    let score={};
+
+    for(let n=1;n<=8;n++){
+
+        let s=0;
+
+        s+= (globalProb[n]||0)*0.10;
+
+        if(m1[last1]){
+
+            let p=norm(m1[last1]);
+
+            s+=(p[n]||0)*0.20;
+        }
+
+        if(m2[last2]){
+
+            let p=norm(m2[last2]);
+
+            s+=(p[n]||0)*0.30;
+        }
+
+        if(m3[last3]){
+
+            let p=norm(m3[last3]);
+
+            s+=(p[n]||0)*0.40;
+        }
+
+        score[n]=s;
+    }
+
+    let ranking=
+        Object.entries(score)
+        .sort((a,b)=>b[1]-a[1]);
+
+    let best=Number(ranking[0][0]);
+
+    let tai=0;
+    let xiu=0;
+    let chan=0;
+    let le=0;
+
+    ranking.forEach(r=>{
+
+        let n=Number(r[0]);
+        let p=r[1];
+
+        if(n<=4) xiu+=p;
+        else tai+=p;
+
+        if(n%2===0) chan+=p;
+        else le+=p;
+    });
+
+    let html="";
+
+    html+=`
+    <div class="card">
+        <div class="big">
+            DỰ ĐOÁN: ${best}
+        </div>
+    </div>`;
+
+    html+=`
+    <div class="card">
+        <h3>Tài/Xỉu</h3>
+        Tài: ${(tai*100).toFixed(2)}%<br>
+        Xỉu: ${(xiu*100).toFixed(2)}%
+    </div>`;
+
+    html+=`
+    <div class="card">
+        <h3>Chẵn/Lẻ</h3>
+        Chẵn: ${(chan*100).toFixed(2)}%<br>
+        Lẻ: ${(le*100).toFixed(2)}%
+    </div>`;
+
+    html+=`
+    <div class="card">
+    <h3>Xếp hạng AI</h3>
+    <table>`;
+
+    ranking.forEach(r=>{
+
+        html+=`
+        <tr>
+        <td>${r[0]}</td>
+        <td>${(r[1]*100).toFixed(2)}%</td>
+        </tr>`;
+    });
+
+    html+="</table></div>";
+
+    result.innerHTML=html;
+}
+</script>
+
+</body>
+</html>
