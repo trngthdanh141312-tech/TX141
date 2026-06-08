@@ -116,7 +116,7 @@ function norm(obj){
 function predict(){
 
     let arr=historyBox.value
-        .replace(/[^1-8]/g,"-")
+        .replace(/[^0-9]/g,"-")
         .split("-")
         .filter(x=>x!="")
         .map(Number);
@@ -131,7 +131,7 @@ function predict(){
 
     let freq={};
 
-    for(let i=1;i<=8;i++)
+    for(let i=0;i<=9;i++)
         freq[i]=0;
 
     arr.forEach(n=>freq[n]++);
