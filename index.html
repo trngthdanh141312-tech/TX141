@@ -86,7 +86,7 @@ const historyBox=document.getElementById("history");
 
 live.addEventListener("input",()=>{
 
-    let v=live.value.replace(/[^1-8]/g,'');
+    let v=live.value.replace(/[^0-9]/g,'');
 
     if(!v) return;
 
